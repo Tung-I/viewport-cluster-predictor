@@ -1,6 +1,5 @@
 import argparse
 import logging
-import ipdb
 import os
 import sys
 import torch
@@ -11,6 +10,10 @@ from box import Box
 from pathlib import Path
 
 import src
+# q: how to solve error "no module named src"?
+# a; add __init__.py in src folder
+# q: I have added __init__.py in src folder, but still get error "no module named src"
+# a: add src folder to PYTHONPATH
 
 
 def main(args):
@@ -178,8 +181,6 @@ def _get_instance(module, config, *args):
 
 
 if __name__ == "__main__":
-    #with ipdb.launch_ipdb_on_exception():
-    #    sys.breakpointhook = ipdb.set_trace
     logging.basicConfig(format='%(asctime)s | %(levelname)s | %(message)s',
                         level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
     args = _parse_args()

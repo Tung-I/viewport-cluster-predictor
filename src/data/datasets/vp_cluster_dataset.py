@@ -6,7 +6,7 @@ import os
 from PIL import Image 
 
 from src.data.datasets.base_dataset import BaseDataset
-from src.data.transforms import compose
+# from src.data.transforms import compose
 
 from torchvision import transforms
 
@@ -58,6 +58,9 @@ def __getitem__(self, index):
     # Load the image
     image = Image.open(image_path)
     image = np.array(image).astype(np.float32)
+
+    # resize the image to 640x320
+    image = cv2.resize(image, (640, 320))
 
     # Check if image is grayscale and convert it to RGB
     if len(image.shape) == 2:

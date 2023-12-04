@@ -43,7 +43,7 @@ optimizer:
         amsgrad: false
 
 logger:
-    name: 'KitsSegLogger'
+    name: 'VPClusterLogger'
     kwargs:
         dummy_input: [16, 1, 128, 128]
 
@@ -52,11 +52,11 @@ monitor:
     kwargs:
         mode: 'min'
         target: 'Loss'
-        saved_freq: 50
+        saved_freq: 10
         early_stop: 0
 
 trainer:
-    name: 'VPClusterrainer'
+    name: 'VPClusterTrainer'
     kwargs:
         device: 'cuda:0'
-        num_epochs: 10000
+        num_epochs: 100
