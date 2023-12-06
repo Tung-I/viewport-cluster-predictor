@@ -1,6 +1,6 @@
 main:
     random_seed: 'nips2019'
-    saved_dir: '/home/tungi/viewport-cluster-predictor/models/vpcluster/train'
+    saved_dir: '/home/tungi/viewport-cluster-predictor/models/sphloss/train'
 
 dataset:
     name: 'VPClusterDataset'
@@ -16,31 +16,45 @@ dataset:
 dataloader:
     name: 'Dataloader'
     kwargs:
-        train_batch_size: 8
-        valid_batch_size: 4
+        train_batch_size: 32
+        valid_batch_size: 16
         shuffle: true
         num_workers: 8
 
 net:
-    name: 'VPCNet'
+    name: 'VPClusterNet'
     kwargs:
         in_channels: 3
         out_channels: 12
         
 losses:
-    - name: 'WeightedMSELoss'
-      weight: 1.0
+    # - name: 'SphericalDistanceLoss'
+    #   weight: 0.1
+    - name: 'ProbabilityLoss'
+      weight: 0.3
+    - name: WeightedMSELoss
+      weight: 0.7
+    # - name: 'SphericalDistanceLoss'
+    #   weight: 1000.
+    # - name: 'ProbabilityLoss'
+    #   weight: 100.
 
 metrics:
     - name: 'SphericalDistance'
-    - name: 'MSE'
 
 optimizer:
     name: 'Adam'
     kwargs:
-        lr: 0.001
+        lr: 0.01
         weight_decay: 0
         amsgrad: false
+
+lr_scheduler:
+    name: StepLR
+    kwargs:
+        step_size: 1
+        gamma: 0.95
+
 
 logger:
     name: 'VPClusterLogger'
@@ -52,11 +66,11 @@ monitor:
     kwargs:
         mode: 'min'
         target: 'Loss'
-        saved_freq: 10
+        saved_freq: 2
         early_stop: 0
 
 trainer:
     name: 'VPClusterTrainer'
     kwargs:
         device: 'cuda:0'
-        num_epochs: 100
+        num_epochs: 48

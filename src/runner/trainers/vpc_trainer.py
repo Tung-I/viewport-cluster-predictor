@@ -38,11 +38,6 @@ class VPClusterTrainer(BaseTrainer):
         Returns:
             metrics (list of torch.Tensor): The computed metrics.
         """
-        # the target is normalized by  label[:8:2] = (label[:8:2] + 90) / 180  # Normalize pitch
-        # and label[1:8:2] = (label[1:8:2] + 180) / 360  # Normalize yaw
-        # now, we need to reverse the normalization
-        target[:, :8:2] = target[:, :8:2] * 180 - 90
-        target[:, 1:8:2] = target[:, 1:8:2] * 360 - 180
         metrics = [metric(output, target) for metric in self.metric_fns]
         return metrics
 
