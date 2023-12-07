@@ -1,7 +1,7 @@
 main:
     random_seed: 'nips2019'
-    saved_dir: '/home/tungi/viewport-cluster-predictor/models/sphloss/train'
-
+    saved_dir: '/home/tungi/viewport-cluster-predictor/models/fair2/train'
+    # loaded_path: '/home/tungi/viewport-cluster-predictor/models/fair/train/checkpoints/model_16.pth'
 dataset:
     name: 'VPClusterDataset'
     kwargs:
@@ -17,7 +17,7 @@ dataloader:
     name: 'Dataloader'
     kwargs:
         train_batch_size: 32
-        valid_batch_size: 16
+        valid_batch_size: 32
         shuffle: true
         num_workers: 8
 
@@ -25,15 +25,13 @@ net:
     name: 'VPClusterNet'
     kwargs:
         in_channels: 3
-        out_channels: 12
+        # out_channels: 12
         
 losses:
-    # - name: 'SphericalDistanceLoss'
-    #   weight: 0.1
-    - name: 'ProbabilityLoss'
-      weight: 0.3
-    - name: WeightedMSELoss
-      weight: 0.7
+    - name: 'MyMSELoss'
+      weight: 1.0
+    # - name: WeightedMSELoss
+    #   weight: 1.0
     # - name: 'SphericalDistanceLoss'
     #   weight: 1000.
     # - name: 'ProbabilityLoss'
@@ -41,18 +39,19 @@ losses:
 
 metrics:
     - name: 'SphericalDistance'
+    - name: 'MeanSquareErrorProb'
 
 optimizer:
     name: 'Adam'
     kwargs:
-        lr: 0.01
+        lr: 0.001
         weight_decay: 0
         amsgrad: false
 
 lr_scheduler:
     name: StepLR
     kwargs:
-        step_size: 1
+        step_size: 8
         gamma: 0.95
 
 
@@ -65,7 +64,7 @@ monitor:
     name: 'Monitor'
     kwargs:
         mode: 'min'
-        target: 'Loss'
+        target: 'SphericalDistance'
         saved_freq: 2
         early_stop: 0
 
@@ -73,4 +72,4 @@ trainer:
     name: 'VPClusterTrainer'
     kwargs:
         device: 'cuda:0'
-        num_epochs: 48
+        num_epochs: 32

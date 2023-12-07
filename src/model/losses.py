@@ -7,80 +7,55 @@ from typing import Callable, Sequence, Union, List, Dict
 import math
 
 
-# class WeightedMSELoss(nn.Module):
-#     """Weighted Mean Squared Error Loss.
-#     """
-#     def __init__(self):
-#         super().__init__()
-#         # Define weights for each entry in the 12-dimensional vector
-#         self.weights = torch.tensor([0.3/4, 0.4/4, 0.3/4, 0.4/4, 0.3/4, 0.4/4, 0.3/4, 0.4/4, 0.3/4, 0.3/4, 0.3/4, 0.3/4])
-
-#     def forward(self, output, target):
-#         """
-#         Args:
-#             output (torch.Tensor) (N, 12): The model output.
-#             target (torch.Tensor) (N, 12): The target values.
-#         Returns:
-#             loss (torch.Tensor) (0): The weighted MSE loss.
-#         """
-#         if self.weights.device != output.device:
-#             self.weights = self.weights.to(output.device)
-
-#         output_copy = output.clone()
-#         target_copy = target.clone()
-#         output_copy[:, :8:2] = output_copy[:, :8:2] / 90
-#         output_copy[:, 1:8:2] = output_copy[:, 1:8:2] / 180
-#         target_copy[:, :8:2] = target_copy[:, :8:2] / 90
-#         target_copy[:, 1:8:2] = target_copy[:, 1:8:2] / 180
-
-#         # Calculate the weighted MSE loss
-#         loss = self.weights * (output_copy - target_copy) ** 2
-#         return loss.mean()
-
-class SphericalDistanceLoss(nn.Module):
-    """Computes the mean spherical distance using the spherical law of cosines.
+class MyMSELoss(nn.Module):
+    """Mean Squared Error Loss.
     """
     def __init__(self):
         super().__init__()
+        # Define weights for each entry in the 12-dimensional vector
 
     def forward(self, output, target):
         """
         Args:
-            output (torch.Tensor) (N, 12): The model output. Assumes the first 8 elements are pairs of (longitude, latitude).
-            target (torch.Tensor) (N, 12): The ground truth. Same structure as output.
+            output (torch.Tensor) (N, 12): The model output.
+            target (torch.Tensor) (N, 12): The target values.
         Returns:
-            mean_distance (torch.Tensor) (0): The mean spherical distance.
+            loss (torch.Tensor) (0): The weighted MSE loss.
         """
-        # The last four elements of the target are the weights of the four pairs
-        # For instance, the target[n, 8:12] = [0.3, 0.2, 0.3, 0.2]
-        # then the weights of the first eight loss terms are [0.3, 0.3, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2]
-        probs = target[:, 8:]
 
+        # print for debugging
         # print(f'output: {output[0]}')
-        # print(f'target: {target[0]}')
-    
-        long_lat_output = output[:, :8].reshape(-1, 2) # Reshape to (N*4, 2)
-        long_lat_target = target[:, :8].reshape(-1, 2) # Reshape to (N*4, 2)
+        # print(f'target_scaled: {target_scaled[0]}')
+        # print(f'output: {output}')
+        # print(f'target: {target}')
+        loss = (output - target) ** 2
+        # print(f'loss: {loss}')
+        # print(f'loss: {loss.mean()}')
+        return loss.mean()
 
-        # Convert degrees to radians
-        long_lat_output = torch.deg2rad(long_lat_output)
-        long_lat_target = torch.deg2rad(long_lat_target)
+class WeightedMSELoss(nn.Module):
+    """Weighted Mean Squared Error Loss.
+    """
+    def __init__(self):
+        super().__init__()
+        # Define weights for each entry in the 12-dimensional vector
+        self.weights = torch.tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
-        # Calculate differences
-        delta_long = long_lat_output[:, 1] - long_lat_target[:, 1]
-        phi1, phi2 = long_lat_output[:, 0], long_lat_target[:, 0]
+    def forward(self, output, target):
+        """
+        Args:
+            output (torch.Tensor) (N, 12): The model output.
+            target (torch.Tensor) (N, 12): The target values.
+        Returns:
+            loss (torch.Tensor) (0): The weighted MSE loss.
+        """
+        if self.weights.device != output.device:
+            self.weights = self.weights.to(output.device)
 
-        # Spherical law of cosines
-        delta_sigma = torch.acos(torch.sin(phi1) * torch.sin(phi2) + torch.cos(phi1) * torch.cos(phi2) * torch.cos(delta_long))
-        # Reshape delta_sigma to (N, 4)
-        delta_sigma = delta_sigma.reshape(-1, 4)
-        # Apply the weights
-        delta_sigma = delta_sigma * probs
-        delta_sigma = delta_sigma.sum(dim=1)
-        # Return the mean spherical distance
-        mean_distance = delta_sigma.mean()
+        # Calculate the weighted MSE loss
+        loss = self.weights * (output - target) ** 2
+        return loss.mean()
 
-        return mean_distance
 
 class ProbabilityLoss(nn.Module):
     """Computes Cross-Entropy Loss for probability predictions.
@@ -106,51 +81,38 @@ class ProbabilityLoss(nn.Module):
 
 
 
-class WeightedMSELoss(nn.Module):
-    """Weighted Mean Squared Error Loss.
-    """
-    def __init__(self):
-        super().__init__()
-        # Define weights for each entry in the 12-dimensional vector
-        self.weight_py = 1.0
-        self.weight_prob = 0
+# class WeightedMSELoss(nn.Module):
+#     """Weighted Mean Squared Error Loss.
+#     """
+#     def __init__(self):
+#         super().__init__()
+#         # Define weights for each entry in the 12-dimensional vector
 
-    def forward(self, output, target):
-        """
-        Args:
-            output (torch.Tensor) (N, 12): The model output.
-            target (torch.Tensor) (N, 12): The target values.
-        Returns:
-            loss (torch.Tensor) (0): The weighted MSE loss.
-        """
-        # scale the output[0, 2, 4, 6] by 90 and output[1, 3, 5, 7] by 180
-        output_copy = output.clone()
-        target_copy = target.clone()
-        # output_copy[:, :8:2] = output_copy[:, :8:2] / 90
-        # output_copy[:, 1:8:2] = output_copy[:, 1:8:2] / 180
-        # target_copy[:, :8:2] = target_copy[:, :8:2] / 90
-        # target_copy[:, 1:8:2] = target_copy[:, 1:8:2] / 180
+#     def forward(self, output, target):
+#         """
+#         Args:
+#             output (torch.Tensor) (N, 12): The model output.
+#             target (torch.Tensor) (N, 12): The target values.
+#         Returns:
+#             loss (torch.Tensor) (0): The weighted MSE loss.
+#         """
 
-        # print(output)
-        # print(target)
-        # raise Exception
-        # Calculate the weighted MSE loss
-        # Extract the (pitch-yaw) pairs from the 12-dimensional vector
+#         target_scaled = target.clone()
+#         target_scaled[:, :8:2] = target_scaled[:, :8:2] / 90
+#         target_scaled[:, 1:8:2] = target_scaled[:, 1:8:2] / 180  
 
-        # The loss of the first 4 pairs is weighted by their corresponding ground truth probabilities
+#         # print(f'output: {output[0]}')
+#         # print(f'target: {target[0]}')
+#         # print(f'target_scaled: {target_scaled[0]}')
 
-        prob_weights = target_copy[:, 8:]
-        # duplicate the prob_weights for each pair
-        prob_weights = torch.repeat_interleave(prob_weights, 2, dim=1)
-
-        prob_weighted_loss = prob_weights * (output_copy[:, :8] - target_copy[:, :8]) ** 2
-        # summate over all pairs
-        prob_weighted_loss = prob_weighted_loss.sum(dim=1)
+#         prob_weighted_loss = (output[:, 0:8:2]- target_scaled[:, 0:8:2]) ** 2 
+#         # summate over all pairs
+#         # prob_weighted_loss = prob_weighted_loss.sum(dim=1)
 
     
 
-        # loss = self.weight_py * prob_weighted_loss + self.weight_prob * prob_loss
+#         # loss = self.weight_py * prob_weighted_loss + self.weight_prob * prob_loss
 
-        # loss = self.weights * (output - target) ** 2
-        # return loss.mean()
-        return prob_weighted_loss.mean()
+#         # loss = self.weights * (output - target) ** 2
+#         # return loss.mean()
+#         return prob_weighted_loss.mean()

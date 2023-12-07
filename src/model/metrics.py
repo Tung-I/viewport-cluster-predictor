@@ -8,7 +8,6 @@ import math
 
 
 
-
 class SphericalDistance(nn.Module):
     """Computes the mean spherical distance using the spherical law of cosines.
     """
@@ -24,6 +23,10 @@ class SphericalDistance(nn.Module):
             mean_distance (torch.Tensor) (0): The mean spherical distance.
         """
         
+        # output_copy = output.clone() * 180 - 90
+        # target_copy = target.clone() * 360 - 180
+        
+
 
         long_lat_output = output[:, :8].reshape(-1, 2) # Reshape to (N*4, 2)
         long_lat_target = target[:, :8].reshape(-1, 2) # Reshape to (N*4, 2)
@@ -88,7 +91,7 @@ class SphericalDistance(nn.Module):
 #         return mean_distance
 
 
-class MeanSquareError(nn.Module):
+class MeanSquareErrorProb(nn.Module):
     """Computes the mean squared error.
     """
     def __init__(self):
@@ -102,5 +105,5 @@ class MeanSquareError(nn.Module):
         Returns:
             loss (torch.Tensor) (0): The MSE loss.
         """
-        loss = (output - target) ** 2
+        loss = (output[:, 8:] - target[:, 8:]) ** 2
         return loss.mean()

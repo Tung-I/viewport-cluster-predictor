@@ -32,7 +32,6 @@ class VPClusterLogger(BaseLogger):
 
 
             # Draw predicted and ground truth viewport centers
-
             self._draw_viewport_centers(draw_pred, output[:8], (255, 255, 255))  # White for prediction
             self._draw_viewport_centers(draw_gt, label[:8], (255, 255, 255))    # White for ground truth
 
@@ -107,6 +106,10 @@ class VPClusterLogger(BaseLogger):
             pitch, yaw = viewport_data[i], viewport_data[i + 1]
             # print(f'pitch: {pitch}, yaw: {yaw}')
             # scale pitch and yaw to image size, where pitch ranges from -90 to 90 and yaw ranges from -180 to 180
+            # pitch = pitch * 180 - 90
+            # yaw = yaw * 360 - 180 
+            
+            # Normalize pitch [-90, 90] to [0, 1] and yaw [-180, 180] to [0, 1]
             pitch = (pitch + 90) / 180
             yaw = (yaw + 180) / 360
 
@@ -115,3 +118,15 @@ class VPClusterLogger(BaseLogger):
 
             draw.ellipse((x-radius, y-radius, x+radius, y+radius), fill=color, outline=color)
             radius -= 5
+
+
+    # def _draw_viewport_centers(self, draw, viewport_data, color):
+    #     """
+    #     Draw viewport centers on the image.
+    #     """
+    #     H, W = 360, 640  # Assuming image dimensions are 360x640
+    #     for i in range(0, len(viewport_data), 2):
+    #         pitch, yaw = viewport_data[i], viewport_data[i + 1]
+    #         x = int(((yaw * 0.5 + 0.5) * W))  # Scale yaw to image width
+    #         y = int(((pitch * 0.5 + 0.5) * H))  # Scale pitch to image height
+    #         draw.ellipse((x-5, y-5, x+5, y+5), fill=color, outline=color)

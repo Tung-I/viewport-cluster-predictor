@@ -30,7 +30,17 @@ class VPClusterDataset(BaseDataset):
         self.train_data = []
         self.val_data = []
 
-        for i in range(1, 21):
+        # Generate a list that random samples 24 numbers from 1 to 27
+        # random.seed(0)
+        # random_numbers = random.sample(range(1, 28), 24)
+        # train_video_idx = random_numbers[:22]
+        # val_video_idx = random_numbers[22:]
+        train_video_idx = [1, 2, 5, 6, 9, 13, 16, 17, 18, 19, 21, 23, 26, 27]
+        # val_video_idx = [3, 4, 7, 8, 10, 11, 12, 14, 15, 20, 22, 24, 25]
+        val_video_idx = [3, 15, 22, 25]
+
+
+        for i in train_video_idx:
             formatted_number = str(i).zfill(2)
             csv_path = self.csv_dir / f'Video{formatted_number}.csv'
             with open(csv_path, "r") as f:
@@ -56,7 +66,7 @@ class VPClusterDataset(BaseDataset):
                     self.train_data.append((im_path, row))
 
 
-        for i in range(21, 25):
+        for i in val_video_idx :
             formatted_number = str(i).zfill(2)
             csv_path = self.csv_dir / f'Video{formatted_number}.csv'
             with open(csv_path, "r") as f:
@@ -83,8 +93,9 @@ class VPClusterDataset(BaseDataset):
         self.data_paths = self.train_data if self.type == 'train' else self.val_data
 
         # random sample 10% of the data
-        sample_rate = 0.5
-        self.data_paths = random.sample(self.data_paths, int(len(self.data_paths) * 0.5))
+        sample_rate = 0.25
+        # sample_rate = 0.01
+        self.data_paths = random.sample(self.data_paths, int(len(self.data_paths) * sample_rate))
 
         
     def __len__(self):
@@ -92,10 +103,6 @@ class VPClusterDataset(BaseDataset):
 
     def __getitem__(self, index):
         image_path, row = self.data_paths[index]
-        # print()
-        # print(image_path)
-        # print(row)
-        # print()
 
         # Load the image
         image = Image.open(image_path)
@@ -115,10 +122,12 @@ class VPClusterDataset(BaseDataset):
         # Process the label
         label = np.array(row)
 
-        # # Normalize pitch [-90, 90] to [0, 1] and yaw [-180, 180] to [0, 1]
-        # label[:8:2] = (label[:8:2] + 90) / 180  # Normalize pitch
-        # label[1:8:2] = (label[1:8:2] + 180) / 360  # Normalize yaw
+        # # normalize label[:8:2] to 0-1
+        # label[:8:2] = (label[:8:2] + 90) / 180.0
+        # # normalize label[1:8:2] to 0-1
+        # label[1:8:2] = (label[1:8:2] + 180) / 360.0
 
-        # print(f'label in dataset: {label}')
+        # print(label)
+        # raise Exception("stop")
 
         return {"image": image, "label": torch.from_numpy(label)}
